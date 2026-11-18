@@ -1,0 +1,3 @@
+partition,trips,excluded,raw_points,clean_points,road_nodes,road_arcs,candidate_arcs
+student_test,10,0,19160,19156,90689,185041,42177
+train,80,2,208417,207017,1933485,3876904,445981
