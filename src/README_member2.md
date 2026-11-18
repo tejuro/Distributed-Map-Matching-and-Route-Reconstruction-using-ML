@@ -136,6 +136,13 @@ also the model furthest ahead after HMM decoding (0.8994).
 - **HMM parameters** (`w_emit=0.5`, `beta=10.0`, `jump_pen=8.0`, `back_pen=2.0`)
   were tuned on **out-of-fold training probabilities** — the student-test
   partition was never used for tuning.
+- **Tuned vs untuned** (`results/tuned_vs_untuned.csv`; both configurations
+  trained on the full 1,224,694 pairs, identical protocol): the search improved
+  its own objective (CV log loss 0.1422 -> 0.1399), but the gain did not
+  transfer to student-test — Top-1 0.8237 (untuned) vs 0.8198 (tuned), log loss
+  0.1248 vs 0.1267. The tuned configuration remains the deployed model because
+  the difference is within the noise of 10 test trips and it optimises the
+  probability quality the HMM consumes; the limitation is reported, not hidden.
 
 ---
 
@@ -147,6 +154,38 @@ python src/03_bayes_opt.py   data/features data/processed results models   # ~20
 ```
 
 Both depend on the feature tables from Part 2 and the decoder in Part 4.
+
+---
+
+## Load and run the best model (for Member 3)
+
+```bash
+pip install -r requirements.txt
+python src/predict.py data/features/model_table_student_test.parquet   # smoke test
+```
+
+As a library — this is the interface the backend should call:
+
+```python
+import sys; sys.path.insert(0, "src")
+from predict import load_final_model, predict_candidate_proba
+
+model, features = load_final_model()                 # tuned XGBClassifier + 15 columns
+proba = predict_candidate_proba(model, candidate_table, features)
+# candidate_table: one row per (observation, arc) pair, must contain the 15
+# feature columns in the order of models/final_model_config.json.
+# proba[i] = P(candidate i is the true road arc) -> emission scores for the HMM.
+```
+
+Validation guarantees:
+
+- **Trip-based validation** - yes. `GroupKFold(5)` with groups = `trip_id`; a trip
+  is never split across folds. See `src/02_train_compare.py`.
+- **Trained only on training data** - yes. Fitting uses the 78 retained training
+  trips only (the two data-quality trips excluded by preprocessing).
+- **Student-test kept separate** - yes. The 10 student-test trips are used only
+  for reporting; they were never fitted on and never used for tuning. The
+  evaluator partition was never read.
 
 ---
 
