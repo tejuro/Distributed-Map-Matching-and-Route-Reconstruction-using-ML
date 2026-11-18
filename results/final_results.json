@@ -1,0 +1,31 @@
+{
+ "model": "XGBoost (Bayes-tuned) + HMM/Viterbi",
+ "best_params": {
+  "n_estimators": 600,
+  "learning_rate": 0.010137626593266643,
+  "max_depth": 7,
+  "min_child_weight": 6.133726345347432,
+  "subsample": 0.7917265550909045,
+  "colsample_bytree": 0.7392269519052258,
+  "reg_lambda": 0.05345585561116394,
+  "gamma": 0.03198073575221535
+ },
+ "cv_log_loss_best": 0.13990239053964615,
+ "hmm_params": {
+  "w_emit": 0.5,
+  "beta": 10.0,
+  "jump_pen": 8.0,
+  "back_pen": 2.0
+ },
+ "test_accuracy": 0.947323392813493,
+ "test_macro_f1": 0.8929014260615418,
+ "test_precision_macro": 0.8980309887085429,
+ "test_recall_macro": 0.8879713909490219,
+ "test_log_loss": 0.12664438784122467,
+ "test_top1_classifier": 0.8198475673418251,
+ "test_viterbi_top1": 0.9076236149179782,
+ "test_route_continuity": 0.9802515163254208,
+ "final_train_rows": 1224694,
+ "train_time_s": 38.77328824996948,
+ "inference_s_all_test_rows": 0.6115865707397461
+}
