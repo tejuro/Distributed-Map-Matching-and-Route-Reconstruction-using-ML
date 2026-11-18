@@ -1,0 +1,8 @@
+# PathSnap - Part 2 (data processing & feature engineering)
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+pyproj>=3.6          # projection to metres - required by preprocess.py
+pyarrow>=14.0        # parquet feature tables
+matplotlib>=3.7      # EDA figures
+folium>=0.14         # interactive maps

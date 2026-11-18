@@ -221,3 +221,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---- PathSnap: dataset is never committed (90 MB) ----
+data/
