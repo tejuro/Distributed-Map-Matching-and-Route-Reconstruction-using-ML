@@ -158,3 +158,37 @@ Both depend on the feature tables from Part 2 and the decoder in Part 4.
   commands above and is stored in `results/`.
 - Full-route reconstruction accuracy does not belong to this part — Viterbi
   numbers are produced by the Part 4 decoder and reported for completeness.
+
+---
+
+## Artifact notes (11/2026)
+
+- All six artifacts in `models/` load and predict in a clean environment
+  (verified with xgboost 3.4.1 / sklearn 1.9.1). The original `XGBoost.joblib`
+  and `final_model.joblib` were serialised by an older xgboost and failed to
+  load ("input stream corrupted"); both were retrained from the recorded
+  configurations. The rebuilt final model reproduces the recorded student-test
+  numbers (accuracy 0.9475 vs 0.9473, macro F1 0.8932 vs 0.8929, log loss
+  0.1267 vs 0.1266). See `src/rebuild_final.py`.
+- `KNN.joblib` and `RandomForest.joblib` were missing from the original
+  package; both are now saved (joblib compress=3: 21.5 MB and 35.3 MB).
+- The five comparison models are trained on the documented 30,000-observation
+  sample (`N_OBS` in `src/02_train_compare.py`); the deployed `final_model` is
+  trained on all 1,224,694 reliable pairs.
+
+## Additional required metrics
+
+The spec's Top-3 candidate recall, ROC-AUC, PR-AUC and balanced accuracy were
+absent from `model_comparison.csv`; `src/extra_metrics.py` computes them from
+the student-test probabilities saved by `02_train_compare.py`.
+See `results/extra_metrics.csv`:
+
+| Model | Top-3 recall | ROC-AUC | PR-AUC | Balanced accuracy |
+|---|---|---|---|---|
+| LogisticRegression | 0.9618 | 0.9619 | 0.8482 | 0.8697 |
+| KNN | 0.9630 | 0.9646 | 0.8658 | 0.8756 |
+| SVM | 0.9531 | 0.9576 | 0.8542 | 0.8630 |
+| RandomForest | 0.9714 | 0.9784 | 0.9001 | 0.8833 |
+| XGBoost | 0.9746 | 0.9788 | 0.9015 | 0.8865 |
+| final_model (tuned) | 0.9736 | 0.9793 | 0.9026 | 0.8880 |
+
