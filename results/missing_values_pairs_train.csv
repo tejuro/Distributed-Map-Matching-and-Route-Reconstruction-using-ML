@@ -1,0 +1,12 @@
+,missing_%
+trip_id,0.0
+obs_idx,0.0
+arc_id,0.0
+dist_m,0.0
+proj_frac,0.0
+rank,0.0
+arc_length_m,0.0
+heading_diff_deg,0.28
+heading_diff_undirected_deg,0.28
+speed_mps,0.11
+n_candidates,0.0

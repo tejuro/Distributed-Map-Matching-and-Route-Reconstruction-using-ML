@@ -222,22 +222,22 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+
 # Python virtual environments
 .venv/
 .venv312/
 
-
 # Nested repository
 PathSnap_Member2/
 
-
-# Local datasets and evaluation outputs
-Data/processed/*labels*.csv
-Data/features/student_test_proba.npy
-
-
-# Generated data and model artifacts
+# PathSnap datasets
+data/
 Data/features/
 Data/processed/
+
+# Generated model artifacts
 models/*.joblib
+
+# Evaluation outputs
+Data/features/student_test_proba.npy
 
