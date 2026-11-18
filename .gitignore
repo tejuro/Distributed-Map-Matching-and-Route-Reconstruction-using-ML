@@ -223,21 +223,64 @@ __marimo__/
 .streamlit/secrets.toml
 
 
-# Python virtual environments
-.venv/
-.venv312/
+# ==========================================
+# PathSnap - Dataset and generated files
+# ==========================================
 
-# Nested repository
-PathSnap_Member2/
-
-# PathSnap datasets
+# Raw datasets - never commit
 data/
+Data/
+sample_data/
+
+# Processed tables and feature caches
+data/processed/
+data/features/
 Data/features/
-Data/processed/
+Data/Processed/
+*.pkl
 
 # Generated model artifacts
 models/*.joblib
+models/*_proba.npy
 
 # Evaluation outputs
 Data/features/student_test_proba.npy
 
+# ==========================================
+# Python environments
+# ==========================================
+
+.venv/
+.venv312/
+venv/
+env/
+
+# ==========================================
+# Nested repository
+# ==========================================
+
+PathSnap_Member2/
+
+# ==========================================
+# Python cache
+# ==========================================
+
+__pycache__/
+*.py[cod]
+*.pyo
+
+# ==========================================
+# Environment secrets
+# ==========================================
+
+.env
+.env.*
+
+# ==========================================
+# IDE and system files
+# ==========================================
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
