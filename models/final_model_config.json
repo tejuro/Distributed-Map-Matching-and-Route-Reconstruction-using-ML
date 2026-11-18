@@ -1,0 +1,30 @@
+{
+ "model": "XGBoost",
+ "features": [
+  "dist_m",
+  "proj_frac",
+  "rank",
+  "arc_length_m",
+  "heading_diff_deg",
+  "heading_diff_undirected_deg",
+  "speed_mps",
+  "n_candidates",
+  "has_heading",
+  "dist_minus_min",
+  "dist_ratio",
+  "d_prev",
+  "d_next",
+  "out_deg",
+  "in_deg"
+ ],
+ "params": {
+  "n_estimators": 600,
+  "learning_rate": 0.010137626593266643,
+  "max_depth": 7,
+  "min_child_weight": 6.133726345347432,
+  "subsample": 0.7917265550909045,
+  "colsample_bytree": 0.7392269519052258,
+  "reg_lambda": 0.05345585561116394,
+  "gamma": 0.03198073575221535
+ }
+}
