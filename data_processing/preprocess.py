@@ -16,6 +16,8 @@ import numpy as np, pandas as pd
 from pyproj import Transformer
 from scipy.spatial import cKDTree
 
+RAW, OUT = sys.argv[1], sys.argv[2]
+os.makedirs(OUT, exist_ok=True)
 
 OUTSIDE_NET_M = 1000   # m   GPS farther than this outside the road-network box is invalid
 MAX_SPEED = 55.0       # m/s (~200 km/h) physically implausible for road vehicles
@@ -218,51 +220,45 @@ def process_trip(tdir, partition):
     return df, a.iloc[cand].reset_index(drop=True), pr, s
 
 
-def main(RAW, OUT):
-    os.makedirs(OUT, exist_ok=True)
-    summaries = []
-    for part in ["train", "student_test"]:
-        P, A, PR = [], [], []
-        for tdir in sorted(glob.glob(f"{RAW}/{part}/*")):
-            df, a, pr, s = process_trip(tdir, part)
-            excluded = part == "train" and not s.get("trip_label_ok", True)
-            s["excluded_from_outputs"] = excluded
-            s["exclusion_reason"] = (f"median GPS-to-route distance {s['label_median_dist_m']:.0f} m "
-                                     f"> {TRIP_LABEL_MEDIAN} m (reference route unreliable)") if excluded else ""
-            summaries.append(s)
-            print(part, s["trip_id"], s["raw_points"], "->", s["clean_points"], "EXCLUDED" if excluded else "")
-            if not excluded:
-                P.append(df); A.append(a); PR.append(pr)
-        p, a, pr = pd.concat(P, ignore_index=True), pd.concat(A, ignore_index=True), pd.concat(PR, ignore_index=True)
+summaries = []
+for part in ["train", "student_test"]:
+    P, A, PR = [], [], []
+    for tdir in sorted(glob.glob(f"{RAW}/{part}/*")):
+        df, a, pr, s = process_trip(tdir, part)
+        excluded = part == "train" and not s.get("trip_label_ok", True)
+        s["excluded_from_outputs"] = excluded
+        s["exclusion_reason"] = (f"median GPS-to-route distance {s['label_median_dist_m']:.0f} m "
+                                 f"> {TRIP_LABEL_MEDIAN} m (reference route unreliable)") if excluded else ""
+        summaries.append(s)
+        print(part, s["trip_id"], s["raw_points"], "->", s["clean_points"], "EXCLUDED" if excluded else "")
+        if not excluded:
+            P.append(df); A.append(a); PR.append(pr)
+    p, a, pr = pd.concat(P, ignore_index=True), pd.concat(A, ignore_index=True), pd.concat(PR, ignore_index=True)
 
-        p.drop(columns=POINT_LABELS).to_csv(f"{OUT}/points_{part}_features.csv", index=False)
-        p[["trip_id", "obs_idx"] + POINT_LABELS].to_csv(f"{OUT}/points_{part}_labels.csv", index=False)
-        a.drop(columns=ARC_LABELS).to_csv(f"{OUT}/arcs_{part}_features.csv", index=False)
-        a[["trip_id", "arc_id"] + ARC_LABELS].to_csv(f"{OUT}/arcs_{part}_labels.csv", index=False)
-        pr.drop(columns=PAIR_LABELS).to_csv(f"{OUT}/pairs_{part}_features.csv", index=False)
-        pr[["trip_id", "obs_idx", "arc_id"] + PAIR_LABELS].to_csv(f"{OUT}/pairs_{part}_labels.csv", index=False)
+    p.drop(columns=POINT_LABELS).to_csv(f"{OUT}/points_{part}_features.csv", index=False)
+    p[["trip_id", "obs_idx"] + POINT_LABELS].to_csv(f"{OUT}/points_{part}_labels.csv", index=False)
+    a.drop(columns=ARC_LABELS).to_csv(f"{OUT}/arcs_{part}_features.csv", index=False)
+    a[["trip_id", "arc_id"] + ARC_LABELS].to_csv(f"{OUT}/arcs_{part}_labels.csv", index=False)
+    pr.drop(columns=PAIR_LABELS).to_csv(f"{OUT}/pairs_{part}_features.csv", index=False)
+    pr[["trip_id", "obs_idx", "arc_id"] + PAIR_LABELS].to_csv(f"{OUT}/pairs_{part}_labels.csv", index=False)
 
-        # ---------------- consistency checks (fail loudly) ----------------
-        tp, ta, tr = set(p.trip_id), set(a.trip_id), set(pr.trip_id)
-        assert tp == ta == tr, f"{part}: trip IDs differ between points/arcs/pairs"
-        assert not p.duplicated(["trip_id", "obs_idx"]).any()
-        assert (p.groupby("trip_id").obs_idx.apply(lambda s: (s.values == np.arange(len(s))).all())).all()
-        assert (p.speed_mps.dropna() <= MAX_SPEED).all()
-        assert not p.loc[p.gap_before, "speed_mps"].notna().any()
-        akeys = set(zip(a.trip_id, a.arc_id))
-        assert all(k in akeys for k in zip(pr.trip_id, pr.arc_id)), "pair arc missing from arc table"
-        rel = p[p.label_reliable]
-        miss = sum(k not in akeys for k in zip(rel.trip_id, rel.label_arc_id))
-        print(f"{part}: reliable labels whose arc is not a candidate: {miss} / {len(rel)}")
-        leak = set(POINT_LABELS + ARC_LABELS + PAIR_LABELS)
-        for f in ["points", "arcs", "pairs"]:
-            cols = set(pd.read_csv(f"{OUT}/{f}_{part}_features.csv", nrows=1).columns)
-            assert not cols & leak, f"leakage column in {f}_{part}_features"
-        print(f"{part}: all checks passed  points={len(p)} arcs={len(a)} pairs={len(pr)} trips={len(tp)}")
+    # ---------------- consistency checks (fail loudly) ----------------
+    tp, ta, tr = set(p.trip_id), set(a.trip_id), set(pr.trip_id)
+    assert tp == ta == tr, f"{part}: trip IDs differ between points/arcs/pairs"
+    assert not p.duplicated(["trip_id", "obs_idx"]).any()
+    assert (p.groupby("trip_id").obs_idx.apply(lambda s: (s.values == np.arange(len(s))).all())).all()
+    assert (p.speed_mps.dropna() <= MAX_SPEED).all()
+    assert not p.loc[p.gap_before, "speed_mps"].notna().any()
+    akeys = set(zip(a.trip_id, a.arc_id))
+    assert all(k in akeys for k in zip(pr.trip_id, pr.arc_id)), "pair arc missing from arc table"
+    rel = p[p.label_reliable]
+    miss = sum(k not in akeys for k in zip(rel.trip_id, rel.label_arc_id))
+    print(f"{part}: reliable labels whose arc is not a candidate: {miss} / {len(rel)}")
+    leak = set(POINT_LABELS + ARC_LABELS + PAIR_LABELS)
+    for f in ["points", "arcs", "pairs"]:
+        cols = set(pd.read_csv(f"{OUT}/{f}_{part}_features.csv", nrows=1).columns)
+        assert not cols & leak, f"leakage column in {f}_{part}_features"
+    print(f"{part}: all checks passed  points={len(p)} arcs={len(a)} pairs={len(pr)} trips={len(tp)}")
 
-    pd.DataFrame(summaries).to_csv(f"{OUT}/trip_summary.csv", index=False)
-    print("done")
-
-
-if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+pd.DataFrame(summaries).to_csv(f"{OUT}/trip_summary.csv", index=False)
+print("done")
